@@ -1,0 +1,15 @@
+.Menu {
+  padding: 0px 8px;
+  height: 80%;
+  box-sizing: border-box;
+  border-radius: 5px; 
+  align-items: center;
+}
+
+.Menu img{
+  height: 80%;
+}
+
+.Menu img:hover{
+  background-color: wheat;
+}

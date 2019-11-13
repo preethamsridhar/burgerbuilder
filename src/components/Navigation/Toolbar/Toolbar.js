@@ -1,17 +1,18 @@
 import React from 'react'
 import classes from './Toolbar.module.css';
 import Logo from '../../Logo/Logo';
+import MenuButton from '../MenuButton/MenuButton'
 
 import Navigationitems from '../../Navigation/Navigationitems/Navigationitems';
 
-function Toolbar() {
+function Toolbar(props) {
   return (
     <header className={classes.Toolbar}>
-      <div>
-        Menu
+      <MenuButton clicked={props.openCloseHandler}/>
+      <div className={classes.Logo}>
+        <Logo />
       </div>
-      <Logo></Logo>
-      <nav>
+      <nav className={classes.DesktopOnly}>
         <Navigationitems></Navigationitems>
       </nav>
     </header>
