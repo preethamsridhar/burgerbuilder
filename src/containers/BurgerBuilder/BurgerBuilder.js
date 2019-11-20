@@ -4,6 +4,10 @@ import Burger from "../../components/Burger/Burger";
 import BuildControls from '../../components/Burger/BuildControls/BuildControls'
 import Modal from '../../components/UI/Modal/Modal';
 import OrderSummary from '../../components/Burger/OrderSummary/OrderSummary'
+import instance from '../../axios-order';
+import 'antd/dist/antd.css';
+import {Spin} from 'antd';
+import withErrorHandler from '../../hoc/withErrorHandler/withErrorHandler'
 
 const INGREDIENT_PRICES = {
   salad: 0.5,
@@ -16,32 +20,33 @@ class BurgerBuilder extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      ingredients: {
-        salad: 0,
-        bacon: 0,
-        cheese: 0,
-        meat: 0
-      },
+      ingredients: null,
       totalPrice: 4.0,
       purchasable: false,
-      purchasing: false
+      purchasing: false,
+      loading: false,
+      error: false
     }
   }
 
-  updatePurchaseState(ingredients) {
-    // const ingredients = {
-    //   ...this.state.ingredients
-    // }
-    const sum = Object.keys(ingredients)
-      .map(igKey => {
-        return ingredients[igKey];
-      })
-      .reduce((sum, value) => {
-        return sum + value;
-      }, 0)
-      this.setState({
-        purchasable: sum > 0
-      })
+  updatePurchaseState() {
+    // updatePurchaseState(ingredients) {
+    console.log("update purchase state", this.state);
+    const ingredients = {
+      ...this.state.ingredients
+    }
+    if(this.state.ingredients){
+      const sum = Object.keys(ingredients)
+        .map(igKey => {
+          return ingredients[igKey];
+        })
+        .reduce((sum, value) => {
+          return sum + value;
+        }, 0)
+        this.setState({
+          purchasable: sum > 0
+        })
+    }
   }
 
   addIngredientHandler = (type) => {
@@ -55,8 +60,8 @@ class BurgerBuilder extends Component {
     this.setState({
       ingredients: currentIngredients,
       totalPrice: updatedTotalPrice
-    })
-    this.updatePurchaseState(currentIngredients);
+    }, () => this.updatePurchaseState());
+    // this.updatePurchaseState(currentIngredients);
   }
 
   removeIngredientHandler = (type) => {
@@ -73,8 +78,8 @@ class BurgerBuilder extends Component {
     this.setState({
       ingredients: currentIngredients,
       totalPrice: updatedTotalPrice
-    })
-    this.updatePurchaseState(currentIngredients);
+    }, () => this.updatePurchaseState());
+    // this.updatePurchaseState(currentIngredients);
   }
 
   purchaseHandler = () => {
@@ -90,37 +95,117 @@ class BurgerBuilder extends Component {
   }
 
   purchaseContinueHandler = () => {
-    alert('You continue!');
+    // alert('You continue!');
+    this.setState({
+      loading:true
+    })
+    const order = {
+      ingredients: this.state.ingredients,
+      price: this.state.totalPrice,
+      customer: {
+        name: "Preetham Sridhar",
+        address: {
+          street: "H134, H Block Sec 64, Noida",
+          zipCode: "201301",
+          country: "India"
+        },
+        email: "preethu2325@gmail.com",
+      },
+      deliveryMethod: 'fastest'
+    }
+    // setTimeout(() => {
+      instance.post('/orders.json', order)
+        .then(response => {  
+          console.log(response)
+          this.setState({
+            loading: false,
+            purchasing: false
+          })  
+        })
+        .catch(error => {
+          console.log(error)
+          this.setState({
+            loading: false,
+            purchasing: false
+          })
+        })
+    // }, 5000);
   }
+
   
+  componentDidMount() {
+    instance.get('https://react-my-burger-5b1d7.firebaseio.com/ingredients.json')
+      .then(response => {
+        console.log("component did mount: ", response);
+        this.setState({
+          ingredients: response.data
+        })
+      })
+      .catch(err=>{
+        console.log(err); 
+        this.setState({
+          error: true
+        })
+      })
+  }
 
   render() {
     const disableInfo = {...this.state.ingredients}
     for (let key in disableInfo){
       disableInfo[key] = disableInfo[key] <= 0;
     }
+    let burger = this.state.error ? 
+    (<p> Ingredients cannot be loaded !!!</p>):
+    (
+      <Aux>
+        <Spin 
+          spinning={true}
+          size="small" 
+        >
+        </Spin>
+      </Aux>
+    );
+
+    let orderSummary = null;
+    if (this.state.ingredients){
+      burger = (
+        <Aux>
+          <Burger ingredients={this.state.ingredients} />
+          <BuildControls 
+            addIngredients={this.addIngredientHandler}
+            removeIngredients={this.removeIngredientHandler}
+            disabled={disableInfo}
+            purchasable={this.state.purchasable}
+            ordered={this.purchaseHandler}
+            price={this.state.totalPrice}
+          />
+        </Aux>
+      );
+      orderSummary = (
+        <OrderSummary 
+              ingredients={this.state.ingredients}
+              purchaseCancelled={this.purchaseCancelHandler}
+              purchaseContinued={this.purchaseContinueHandler}
+              totalPrice={this.state.totalPrice}
+            />
+      )
+    }
+
     return (
       <Aux>
         <Modal show={this.state.purchasing} modalClosed={this.purchaseCancelHandler}>
-          <OrderSummary 
-            ingredients={this.state.ingredients}
-            purchaseCancelled={this.purchaseCancelHandler}
-            purchaseContinued={this.purchaseContinueHandler}
-            totalPrice={this.state.totalPrice}
-          ></OrderSummary>
+          <Spin spinning={this.state.loading} size="large">
+            {orderSummary}
+          </Spin>
         </Modal>
-        <Burger ingredients={this.state.ingredients} />
-        <BuildControls 
-          addIngredients={this.addIngredientHandler}
-          removeIngredients={this.removeIngredientHandler}
-          disabled={disableInfo}
-          purchasable={this.state.purchasable}
-          ordered={this.purchaseHandler}
-          price={this.state.totalPrice}
-        />
+        {burger}
       </Aux>
     )
   }
+
+  componentWillUnmount() {
+    console.log("[burgerBuilder.js] componentWillUnmount");
+  }
 } 
 
-export default BurgerBuilder;
+export default withErrorHandler(BurgerBuilder, instance);
