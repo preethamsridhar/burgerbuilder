@@ -6,8 +6,8 @@ export default function Navigationitems(props) {
   return (
     <ul className={classes.NavigationItems}>
       <Navigationitem link="/" active={true}> Burger Builder </Navigationitem>
-      <Navigationitem link="/" > Checkout </Navigationitem>
-      <Navigationitem link="/" > About </Navigationitem>
+      <Navigationitem link="/checkout" > Checkout </Navigationitem>
+      {/* <Navigationitem link="/" > About </Navigationitem> */}
     </ul>
   )
 }
