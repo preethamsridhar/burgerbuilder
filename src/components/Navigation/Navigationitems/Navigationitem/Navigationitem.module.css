@@ -19,6 +19,10 @@
   color: #40A4C8;
 }
 
+.active {
+  background-color: grey;
+}
+
 @media(min-width: 500px) {
   .NavigationItem {
     margin: 0;

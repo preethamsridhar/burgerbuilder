@@ -11,7 +11,6 @@ export default function SideDrawer(props) {
   if(props.open){
     attachedClasses = [classes.SideDrawer, classes.Open]
   }
-  console.log('class for SideDrawer:', attachedClasses)
   return (
     <Aux>
       <Backdrop show={props.open} clicked={props.closed}/>
